@@ -1,36 +1,18 @@
 # 🏠 House Price Prediction System
-# Week 1 Internship Project – Xylofy AI
+
+### Week 1 Internship Project – Xylofy AI
+
 ## 📌 About the Project
 
-# This project was completed as part of the Week 1 Internship Assignment at Xylofy AI. The objective was to build a Machine Learning model capable of predicting house prices based on various property features and identify the factors that most strongly influence property value.
+This project was completed as part of the **Week 1 Internship Assignment at Xylofy AI**. The objective was to build a Machine Learning model capable of predicting house prices based on various property features and identify the factors that most strongly influence property value.
 
-# The project covers the complete Machine Learning workflow, including data cleaning, exploratory data analysis, feature engineering, model building, evaluation, visualization, and business recommendations.
-
-# 🏠 House Price Prediction System
-Real estate buyers and sellers often rely on guesswork or outdated comparisons to estimate a property's fair value. This project develops a regression model that predicts house prices using features such as area, number of rooms, parking availability, furnishing status, and other amenities.
-A Machine Learning project that predicts house prices based on various housing features such as area, bedrooms, bathrooms, parking availability, furnishing status, and other amenities. The project uses data analysis, visualization, and regression models to provide accurate price predictions.
-
----
-
-## 📌 Project Overview
-
-Real estate buyers and sellers often struggle to estimate the fair value of a property. This project leverages Machine Learning techniques to predict house prices and identify the key factors influencing property values.
-
-The project includes:
-
-* Data Cleaning & Preprocessing
-* Exploratory Data Analysis (EDA)
-* Feature Engineering
-* Linear Regression Model
-* Random Forest Regressor
-* Model Evaluation
-* Interactive Prediction Dashboard
+The project covers the complete Machine Learning workflow, including data cleaning, exploratory data analysis, feature engineering, model building, evaluation, visualization, and business recommendations.
 
 ---
 
 ## 🎯 Problem Statement
 
-Estimating property prices manually can be inaccurate and time-consuming. This project aims to build a regression model that predicts house prices based on property characteristics and identifies the most important factors affecting price.
+Real estate buyers and sellers often rely on guesswork or outdated comparisons to estimate a property's fair value. This project develops a regression model that predicts house prices using features such as area, number of rooms, parking availability, furnishing status, and other amenities.
 
 ---
 
@@ -53,151 +35,108 @@ Estimating property prices manually can be inaccurate and time-consuming. This p
 * Preferred Area
 * Furnishing Status
 
-### Target Variable
+### 🎯 Target Variable
 
 * Price
 
 ---
 
-## 🛠️ Tech Stack
-
-### Programming Language
+## 🛠️ Technologies Used
 
 * Python
-
-### Libraries
-
 * Pandas
 * NumPy
 * Matplotlib
 * Seaborn
 * Scikit-Learn
-
-### Tools
-
 * Jupyter Notebook
 * Google Colab
-* GitHub
-* Netlify
 
 ---
 
-## 📊 Data Analysis & Visualization
+## 🔍 Project Workflow
 
-The following visualizations were created:
+### 1️⃣ Data Loading & Exploration
 
-### 📈 House Price Distribution
+* Loaded Housing.csv dataset
+* Checked dataset dimensions
+* Identified target and feature variables
+* Analyzed missing values
 
-Histogram showing the distribution of house prices.
+### 2️⃣ Data Cleaning
 
-### 🔥 Correlation Heatmap
+* Removed duplicate records
+* Handled missing values
+* Applied One-Hot Encoding
+* Prepared dataset for modeling
 
-Displays relationships between features and house prices.
+### 3️⃣ Model Building
 
-### 🎯 Actual vs Predicted Scatter Plot
+* Linear Regression
+* Random Forest Regressor
+* Train-Test Split (80:20)
 
-Compares actual house prices with predicted values.
-
-### 🏠 Area vs Price Analysis
-
-Shows the impact of property size on price.
-
-### 🚗 Parking vs Price Analysis
-
-Explores how parking availability affects house value.
-
-### 🛁 Bathrooms vs Price Analysis
-
-Analyzes the influence of bathrooms on pricing.
-
----
-
-## 🤖 Machine Learning Models
-
-### 1️⃣ Linear Regression
-
-Used as a baseline model to predict house prices.
-
-### 2️⃣ Random Forest Regressor
-
-Used to improve prediction performance and capture non-linear relationships.
-
----
-
-## 📏 Evaluation Metrics
-
-The models were evaluated using:
+### 4️⃣ Model Evaluation
 
 * Mean Absolute Error (MAE)
 * Root Mean Squared Error (RMSE)
 * R² Score
 
-### Result
+### 5️⃣ Data Visualization
 
-✅ Random Forest Regressor performed better than Linear Regression and produced more accurate predictions.
+* House Price Distribution
+* Correlation Heatmap
+* Actual vs Predicted Price Scatter Plot
 
 ---
 
-## 🔍 Key Insights
+## 📊 Key Insights
 
-* Area was the strongest factor influencing house prices.
-* Bathrooms significantly affected property value.
-* Parking availability increased house prices.
-* Air conditioning had a positive impact on pricing.
-* Furnishing status influenced price less than expected.
-* Larger houses with modern amenities generally had higher market values.
+✅ Area was the most influential feature affecting house prices.
+
+✅ Houses with more bathrooms and parking spaces generally had higher prices.
+
+✅ Air conditioning positively impacted property value.
+
+✅ Random Forest Regressor outperformed Linear Regression.
+
+✅ Furnishing status had less impact on price than expected.
+
+---
+
+## 📈 Results
+
+The Random Forest Regressor achieved better predictive performance compared to Linear Regression and produced more accurate house price estimates.
 
 ---
 
 ## 💡 Business Recommendation
 
-Real estate businesses should focus on properties with:
-
-* Larger areas
-* More bathrooms
-* Adequate parking facilities
-* Air conditioning
-* Multiple stories
-
-These features contribute most to higher property values and buyer demand.
+Real estate businesses should prioritize properties with larger areas, multiple bathrooms, parking facilities, and modern amenities such as air conditioning, as these features significantly contribute to higher property values.
 
 ---
 
 ## 🚀 Live Dashboard
 
-🌐 **Live Application**
-
-https://housingpricepredicitionsystem.netlify.app/
-
-Users can enter property details and receive real-time house price predictions.
+🌐 https://housingpricepredicitionsystem.netlify.app/
 
 ---
 
 ## 📓 Google Colab Notebook
 
-🔗 **Notebook Link**
-
-https://colab.research.google.com/drive/1Syrnemz1_z4hClYilEfNYS_LClWmsFxd
-
-The notebook contains:
-
-* Data Loading & Exploration
-* Data Cleaning
-* Exploratory Data Analysis
-* Model Building
-* Model Evaluation
-* Visualizations
-* Business Insights
+📘 https://colab.research.google.com/drive/1Syrnemz1_z4hClYilEfNYS_LClWmsFxd
 
 ---
 
-## 📈 Future Enhancements
+## 🏢 Internship Details
 
-* XGBoost Implementation
-* Hyperparameter Tuning
-* Streamlit Deployment
-* Advanced Feature Engineering
-* Real-Time Market Data Integration
+**Organization:** Xylofy AI
+
+**Program:** AI & Data Science Internship
+
+**Project:** House Price Prediction System
+
+**Week:** Week 1 Assignment
 
 ---
 
@@ -209,9 +148,9 @@ The notebook contains:
 
 📊 Data Analytics | Machine Learning | AI Enthusiast
 
-🔗 GitHub: https://github.com/tamil1208
+🐙 GitHub: https://github.com/tamil1208
 
-🔗 LinkedIn: https://www.linkedin.com/in/tamilarasan-p
+💼 LinkedIn: https://www.linkedin.com/in/tamilarasan-p
 
 ---
 
