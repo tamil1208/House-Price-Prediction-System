@@ -1,5 +1,13 @@
 # 🏠 House Price Prediction System
+# Week 1 Internship Project – Xylofy AI
+## 📌 About the Project
 
+# This project was completed as part of the Week 1 Internship Assignment at Xylofy AI. The objective was to build a Machine Learning model capable of predicting house prices based on various property features and identify the factors that most strongly influence property value.
+
+# The project covers the complete Machine Learning workflow, including data cleaning, exploratory data analysis, feature engineering, model building, evaluation, visualization, and business recommendations.
+
+# 🏠 House Price Prediction System
+Real estate buyers and sellers often rely on guesswork or outdated comparisons to estimate a property's fair value. This project develops a regression model that predicts house prices using features such as area, number of rooms, parking availability, furnishing status, and other amenities.
 A Machine Learning project that predicts house prices based on various housing features such as area, bedrooms, bathrooms, parking availability, furnishing status, and other amenities. The project uses data analysis, visualization, and regression models to provide accurate price predictions.
 
 ---
