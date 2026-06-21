@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>House Price Prediction Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0f1a;--surface:#131929;--surface2:#1c2540;--border:#252f4a;
+  --blue:#2563eb;--blue2:#3b82f6;--blue3:#60a5fa;--blue4:#93c5fd;
+  --gold:#f59e0b;--green:#10b981;--red:#ef4444;--purple:#8b5cf6;--teal:#06b6d4;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--white:#fff;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,#080e1e 0%,#131929 100%);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  height:60px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.5)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),var(--purple));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.brand-name{font-size:16px;font-weight:700;color:var(--white)}
+.brand-sub{font-size:11px;color:var(--text3)}
+.nav{display:flex;gap:3px}
+.nav-btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+  color:var(--text2);background:transparent;transition:all .15s;letter-spacing:.2px}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:var(--blue);color:white;box-shadow:0 0 12px rgba(37,99,235,.4)}
+
+/* PAGES */
+.page{display:none;padding:24px 28px;max-width:1440px;margin:0 auto;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.ph{margin-bottom:20px;display:flex;align-items:baseline;gap:12px}
+.ph h1{font-size:20px;font-weight:700;color:var(--white)}
+.ph p{font-size:13px;color:var(--text3)}
+
+/* KPI */
+.kpi-row{display:grid;gap:14px;margin-bottom:20px}
+.k5{grid-template-columns:repeat(5,1fr)}
+.k4{grid-template-columns:repeat(4,1fr)}
+.k3{grid-template-columns:repeat(3,1fr)}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:16px 18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--blue),var(--blue3))}
+.kpi.gold::before{background:linear-gradient(90deg,var(--gold),#fcd34d)}
+.kpi.green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.kpi.red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+.kpi.purple::before{background:linear-gradient(90deg,var(--purple),#a78bfa)}
+.kpi.teal::before{background:linear-gradient(90deg,var(--teal),#67e8f9)}
+.kpi-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;color:var(--white);line-height:1}
+.kpi-sub{font-size:11px;color:var(--text2);margin-top:4px}
+.kpi-ico{position:absolute;top:14px;right:14px;font-size:20px;opacity:.3}
+
+/* LAYOUT GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.card-title .icon{font-size:14px}
+
+/* FILTER BAR */
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:12px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.fl{font-size:11px;color:var(--text3);font-weight:700;white-space:nowrap}
+.fsel{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);padding:6px 10px;font-size:12px;cursor:pointer;outline:none}
+.fsel:focus{border-color:var(--blue)}
+.fbtn{padding:6px 12px;background:var(--blue);border:none;border-radius:6px;color:white;font-size:12px;cursor:pointer}
+.fcount{font-size:11px;color:var(--text3)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:6px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--surface2)}
+th{padding:8px 12px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;
+  text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid rgba(37,55,100,.3);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(37,99,235,.04)}
+.badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700}
+.b-blue{background:rgba(37,99,235,.2);color:var(--blue3)}
+.b-gold{background:rgba(245,158,11,.2);color:#fcd34d}
+.b-green{background:rgba(16,185,129,.2);color:#34d399}
+.b-purple{background:rgba(139,92,246,.2);color:#a78bfa}
+
+/* RANK BARS */
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-item{display:flex;align-items:center;gap:8px}
+.rank-name{font-size:11px;color:var(--text);width:130px;flex-shrink:0}
+.rank-track{flex:1;background:var(--surface2);border-radius:3px;height:20px;overflow:hidden}
+.rank-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;
+  font-size:10px;font-weight:700;color:white;transition:width 1s ease}
+.rank-val{font-size:11px;color:var(--text2);width:55px;text-align:right}
+
+/* HEATMAP */
+.hmap{overflow-x:auto}
+.hmap table{font-size:10px}
+.hmap th{padding:5px 8px;color:var(--text3);font-size:9px}
+.hmap td{padding:0;text-align:center;min-width:54px;height:36px;font-weight:700;border:1px solid var(--bg)}
+
+/* INSIGHT BOX */
+.insight{background:linear-gradient(135deg,rgba(37,99,235,.06),rgba(139,92,246,.06));
+  border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:16px;margin-bottom:16px}
+.insight h3{font-size:11px;font-weight:700;color:var(--blue3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.insight ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.insight li{font-size:12px;color:var(--text2);display:flex;gap:7px;align-items:flex-start}
+.insight li::before{content:'▸';color:var(--blue);flex-shrink:0;margin-top:1px}
+
+/* REC CARDS */
+.rec{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.rec-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rec-num{width:26px;height:26px;background:var(--blue);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.rec-title{font-size:13px;font-weight:700;color:var(--white)}
+.rec-body{font-size:12px;color:var(--text2);line-height:1.6}
+.tag{display:inline-block;background:rgba(37,99,235,.12);color:var(--blue3);
+  border:1px solid rgba(37,99,235,.25);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;margin:6px 4px 0 0}
+
+/* DONUT LEGEND */
+.dl{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.dl-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
+.dl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* PROGRESS BAR */
+.prog{margin-bottom:10px}
+.prog-label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.prog-track{background:var(--surface2);border-radius:3px;height:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px}
+
+@media(max-width:900px){
+  .g2,.g3,.g21,.g12,.k5,.k4{grid-template-columns:1fr}
+  .k3{grid-template-columns:1fr 1fr}
+  .topbar{flex-wrap:wrap;height:auto;padding:10px 14px;gap:8px}
+  .page{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">🏠</div>
+    <div><div class="brand-name">HousePriceIQ</div><div class="brand-sub">ML Prediction Dashboard · Housing.csv</div></div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="goPage('p1',this)">📊 Overview</button>
+    <button class="nav-btn" onclick="goPage('p2',this)">🏡 Price Analysis</button>
+    <button class="nav-btn" onclick="goPage('p3',this)">🔗 Correlation</button>
+    <button class="nav-btn" onclick="goPage('p4',this)">🤖 ML Models</button>
+    <button class="nav-btn" onclick="goPage('p5',this)">💡 Insights</button>
+  </div>
+</div>
+
+<!-- PAGE 1: OVERVIEW -->
+<div id="p1" class="page active">
+  <div class="ph"><h1>Dataset Overview</h1><p>Housing.csv · 545 records · 13 features · Zero missing values</p></div>
+
+  <div class="kpi-row k5">
+    <div class="kpi"><div class="kpi-ico">🏠</div><div class="kpi-label">Total Houses</div><div class="kpi-val">545</div><div class="kpi-sub">Records in dataset</div></div>
+    <div class="kpi gold"><div class="kpi-ico">💰</div><div class="kpi-label">Avg House Price</div><div class="kpi-val">₹47.7L</div><div class="kpi-sub">Mean: 4,766,729</div></div>
+    <div class="kpi green"><div class="kpi-ico">📉</div><div class="kpi-label">Min Price</div><div class="kpi-val">₹17.5L</div><div class="kpi-sub">1,750,000</div></div>
+    <div class="kpi red"><div class="kpi-ico">📈</div><div class="kpi-label">Max Price</div><div class="kpi-val">₹133L</div><div class="kpi-sub">13,300,000</div></div>
+    <div class="kpi purple"><div class="kpi-ico">📐</div><div class="kpi-label">Avg Area</div><div class="kpi-val">5,150</div><div class="kpi-sub">sq ft</div></div>
+  </div>
+
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="icon">📊</span>House Price Distribution (Histogram)</div><canvas id="ch_hist" height="220"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🗂️</span>Feature Types Overview</div><canvas id="ch_types" height="220"></canvas></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="icon">📋</span>Dataset Summary Table</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Feature</th><th>Type</th><th>Unique</th><th>Min</th><th>Max</th><th>Mean / Mode</th><th>Missing</th></tr></thead>
+      <tbody>
+        <tr><td>price</td><td><span class="badge b-blue">Numeric</span></td><td>366</td><td>1,750,000</td><td>13,300,000</td><td>4,766,729</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>area</td><td><span class="badge b-blue">Numeric</span></td><td>207</td><td>1,650</td><td>16,200</td><td>5,150.5</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>bedrooms</td><td><span class="badge b-blue">Numeric</span></td><td>6</td><td>1</td><td>6</td><td>2.97</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>bathrooms</td><td><span class="badge b-blue">Numeric</span></td><td>4</td><td>1</td><td>4</td><td>1.29</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>stories</td><td><span class="badge b-blue">Numeric</span></td><td>4</td><td>1</td><td>4</td><td>1.81</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>parking</td><td><span class="badge b-blue">Numeric</span></td><td>4</td><td>0</td><td>3</td><td>0.69</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>mainroad</td><td><span class="badge b-gold">Binary</span></td><td>2</td><td>no</td><td>yes</td><td>yes (439)</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>guestroom</td><td><span class="badge b-gold">Binary</span></td><td>2</td><td>no</td><td>yes</td><td>no (449)</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>basement</td><td><span class="badge b-gold">Binary</span></td><td>2</td><td>no</td><td>yes</td><td>no (354)</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>hotwaterheating</td><td><span class="badge b-gold">Binary</span></td><td>2</td><td>no</td><td>yes</td><td>no (520)</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>airconditioning</td><td><span class="badge b-gold">Binary</span></td><td>2</td><td>no</td><td>yes</td><td>no (373)</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>prefarea</td><td><span class="badge b-gold">Binary</span></td><td>2</td><td>no</td><td>yes</td><td>no (417)</td><td><span class="badge b-green">0</span></td></tr>
+        <tr><td>furnishingstatus</td><td><span class="badge b-purple">Multi-Cat</span></td><td>3</td><td>unfurnished</td><td>furnished</td><td>semi-furnished</td><td><span class="badge b-green">0</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="insight">
+    <h3>📌 Dataset Insights</h3>
+    <ul>
+      <li>545 records with <strong>zero missing values</strong> — dataset is clean and ready for ML modeling.</li>
+      <li>Price ranges from ₹17.5L to ₹133L; the right-skewed distribution means most homes cluster in the ₹25L–₹50L range.</li>
+      <li>6 binary categorical features encoded via one-hot encoding for ML; furnishing status has 3 levels.</li>
+      <li>Numeric features: price, area, bedrooms, bathrooms, stories, parking — used directly in regression models.</li>
+      <li>Dataset split: 80% training (436 records), 20% testing (109 records) with random_state=42 for reproducibility.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- PAGE 2: PRICE ANALYSIS -->
+<div id="p2" class="page">
+  <div class="ph"><h1>House Price Analysis</h1><p>Interactive exploration of price drivers and property characteristics</p></div>
+
+  <div class="filter-bar">
+    <span class="fl">🔍 Slicers:</span>
+    <select class="fsel" id="fb" onchange="filterP2()"><option value="all">All Bedrooms</option><option value="1">1 Bed</option><option value="2">2 Beds</option><option value="3">3 Beds</option><option value="4">4 Beds</option><option value="5">5 Beds</option><option value="6">6 Beds</option></select>
+    <select class="fsel" id="fba" onchange="filterP2()"><option value="all">All Bathrooms</option><option value="1">1 Bath</option><option value="2">2 Baths</option><option value="3">3 Baths</option><option value="4">4 Baths</option></select>
+    <select class="fsel" id="fs" onchange="filterP2()"><option value="all">All Stories</option><option value="1">1 Story</option><option value="2">2 Stories</option><option value="3">3 Stories</option><option value="4">4 Stories</option></select>
+    <select class="fsel" id="ff" onchange="filterP2()"><option value="all">All Furnishing</option><option value="furnished">Furnished</option><option value="semi-furnished">Semi-Furnished</option><option value="unfurnished">Unfurnished</option></select>
+    <select class="fsel" id="fm" onchange="filterP2()"><option value="all">Main Road</option><option value="yes">On Main Road</option><option value="no">Off Main Road</option></select>
+    <select class="fsel" id="fg" onchange="filterP2()"><option value="all">Guest Room</option><option value="yes">Has Guest Room</option><option value="no">No Guest Room</option></select>
+    <select class="fsel" id="fbas" onchange="filterP2()"><option value="all">Basement</option><option value="yes">Has Basement</option><option value="no">No Basement</option></select>
+    <select class="fsel" id="fac" onchange="filterP2()"><option value="all">Air Conditioning</option><option value="yes">Has AC</option><option value="no">No AC</option></select>
+    <button class="fbtn" onclick="resetF()">Reset</button>
+    <span class="fcount" id="fcnt"></span>
+  </div>
+
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="icon">📊</span>House Price Distribution (Filtered)</div><canvas id="ch_fhist" height="220"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🔵</span>Price vs Area Scatter Plot</div><canvas id="ch_scatter" height="220"></canvas><div style="font-size:10px;color:var(--text3);text-align:center;margin-top:6px">Bubble size ∝ Bedrooms · Color = Furnishing Status</div></div>
+  </div>
+
+  <div class="g3">
+    <div class="card"><div class="card-title"><span class="icon">🛏️</span>Avg Price by Bedrooms</div><canvas id="ch_bed" height="200"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🚿</span>Avg Price by Bathrooms</div><canvas id="ch_bath" height="200"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🏗️</span>Avg Price by Stories</div><canvas id="ch_story" height="200"></canvas></div>
+  </div>
+
+  <div class="g3">
+    <div class="card"><div class="card-title"><span class="icon">🅿️</span>Avg Price by Parking</div><canvas id="ch_park" height="160"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🪑</span>Price by Furnishing Status</div><canvas id="ch_furn" height="160"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">❄️</span>Price: AC vs No AC</div><canvas id="ch_ac" height="160"></canvas></div>
+  </div>
+
+  <div class="insight">
+    <h3>📌 Price Analysis Insights</h3>
+    <ul>
+      <li><strong>Area is the #1 driver</strong> — larger properties consistently command higher prices (correlation: 0.536).</li>
+      <li><strong>Bathrooms multiply value steeply</strong> — 4-bathroom homes average ₹122.5L vs ₹42.1L for 1 bathroom (3× premium).</li>
+      <li><strong>Stories add steady value</strong> — each additional story adds ₹5–15L on average.</li>
+      <li><strong>AC premium is 43%</strong> — AC homes average ₹60.1L vs ₹41.9L without AC.</li>
+      <li><strong>Furnished homes command 37% more</strong> than unfurnished (₹54.9L vs ₹40.1L).</li>
+      <li><strong>6-bedroom homes drop below 5-bedroom</strong> — oversized properties face a pricing ceiling.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- PAGE 3: CORRELATION -->
+<div id="p3" class="page">
+  <div class="ph"><h1>Correlation & Feature Importance</h1><p>Statistical relationships and Random Forest importance scores from actual model training</p></div>
+
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="icon">📊</span>Correlation with House Price</div><canvas id="ch_corr" height="300"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🌲</span>Random Forest Feature Importance</div><canvas id="ch_fi" height="300"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="icon">📈</span>Top Positive Factors</div><div class="rank-list" id="pos_rank"></div></div>
+    <div class="card"><div class="card-title"><span class="icon">📉</span>Feature Importance Ranking (RF)</div><div class="rank-list" id="fi_rank"></div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="icon">🌡️</span>Correlation Heatmap — Key Numeric Features</div>
+    <div class="hmap" id="heatmap"></div>
+  </div>
+
+  <div class="insight">
+    <h3>📌 Correlation & Feature Importance Insights</h3>
+    <ul>
+      <li><strong>Area (r=0.536)</strong> is the strongest predictor — confirmed by RF importance (46.8%), dominating all other features.</li>
+      <li><strong>Bathrooms (r=0.518)</strong> rank 2nd — buyers treat extra bathrooms as a luxury proxy.</li>
+      <li><strong>Air Conditioning (r=0.453)</strong> shows 3rd strongest correlation — reflects overall property quality.</li>
+      <li>Random Forest assigns 47% importance to area alone — a single dominant feature in this dataset.</li>
+      <li>Bedrooms (r=0.366) rank lower than bathrooms and AC, suggesting buyers value luxury amenities over room count.</li>
+      <li>Hot water heating (r=0.093) has the weakest predictive power — largely a rare binary feature.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- PAGE 4: ML MODELS -->
+<div id="p4" class="page">
+  <div class="ph"><h1>ML Model Performance Dashboard</h1><p>Linear Regression vs Random Forest Regressor · 80/20 train-test split · random_state=42</p></div>
+
+  <div class="kpi-row k4">
+    <div class="kpi gold"><div class="kpi-ico">📏</div><div class="kpi-label">Best MAE (Linear Reg)</div><div class="kpi-val">₹9.7L</div><div class="kpi-sub">970,043 avg absolute error</div></div>
+    <div class="kpi"><div class="kpi-ico">📐</div><div class="kpi-label">Best RMSE (Linear Reg)</div><div class="kpi-val">₹13.2L</div><div class="kpi-sub">1,324,507</div></div>
+    <div class="kpi green"><div class="kpi-ico">🎯</div><div class="kpi-label">Best R² Score</div><div class="kpi-val">65.3%</div><div class="kpi-sub">Linear Regression wins</div></div>
+    <div class="kpi purple"><div class="kpi-ico">🌲</div><div class="kpi-label">RF R² Score</div><div class="kpi-val">61.2%</div><div class="kpi-sub">Random Forest</div></div>
+  </div>
+
+  <div class="g3">
+    <div class="card"><div class="card-title"><span class="icon">📊</span>MAE Comparison</div><canvas id="ch_mae" height="200"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">📊</span>RMSE Comparison</div><canvas id="ch_rmse" height="200"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">📊</span>R² Score Comparison</div><canvas id="ch_r2" height="200"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="icon">🔵</span>Actual vs Predicted — Linear Regression</div><canvas id="ch_avp_lr" height="260"></canvas></div>
+    <div class="card"><div class="card-title"><span class="icon">🟢</span>Actual vs Predicted — Random Forest</div><canvas id="ch_avp_rf" height="260"></canvas></div>
+  </div>
+
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span>Residual Distribution (Linear Regression)</div>
+      <canvas id="ch_resid" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🎯</span>Prediction Accuracy</div>
+      <div style="padding:8px 0">
+        <div class="prog"><div class="prog-label">Linear Regression R² = 65.3%</div><div class="prog-track"><div class="prog-fill" style="width:65.3%;background:linear-gradient(90deg,var(--blue),var(--blue3))"></div></div></div>
+        <div class="prog"><div class="prog-label">Random Forest R² = 61.2%</div><div class="prog-track"><div class="prog-fill" style="width:61.2%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div></div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:14px">
+          <strong style="color:var(--gold)">✅ Linear Regression wins</strong> — surprisingly, the simpler model outperforms RF on this dataset (65.3% vs 61.2% R²), suggesting a moderately linear price-feature relationship.<br><br>
+          Average prediction error (MAE) = ₹9.7L on a mean price of ₹47.7L — a <strong>~20.3% relative error</strong>, acceptable for a baseline model.<br><br>
+          <strong>Next steps:</strong> XGBoost, feature engineering (price/sqft), cross-validation could push R² above 80%.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <h3>📌 Model Performance Insights</h3>
+    <ul>
+      <li>Linear Regression (R²=0.653) outperforms Random Forest (R²=0.612) — the dataset has a moderately linear structure.</li>
+      <li>MAE of ₹9.7L means predictions are off by ~₹9.7L on average — within acceptable range for real estate estimates.</li>
+      <li>Random Forest underestimates luxury properties (>₹100L), visible in the scatter plot where points fall below the diagonal.</li>
+      <li>Residuals are approximately normally distributed around 0, indicating no major systematic bias in the Linear Regression model.</li>
+      <li>Both models were trained on one-hot encoded features with 80/20 split using random_state=42 for reproducibility.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- PAGE 5: INSIGHTS -->
+<div id="p5" class="page">
+  <div class="ph"><h1>Business Insights & Recommendations</h1><p>Actionable intelligence for real estate buyers, sellers, and developers</p></div>
+
+  <div class="kpi-row k3">
+    <div class="kpi gold"><div class="kpi-ico">🏆</div><div class="kpi-label">Most Important Feature</div><div class="kpi-val" style="font-size:18px">Area (sqft)</div><div class="kpi-sub">46.8% RF importance · r=0.536</div></div>
+    <div class="kpi green"><div class="kpi-ico">🎯</div><div class="kpi-label">Best Predicted Price Range</div><div class="kpi-val" style="font-size:18px">₹30L–₹70L</div><div class="kpi-sub">Mid-Range · Highest model accuracy</div></div>
+    <div class="kpi purple"><div class="kpi-ico">💎</div><div class="kpi-label">Highest Value Segment</div><div class="kpi-val" style="font-size:18px">4 Bath + AC</div><div class="kpi-sub">Avg ₹122.5L — Luxury tier</div></div>
+  </div>
+
+  <div class="g21">
+    <div class="card">
+      <div class="card-title"><span class="icon">🏆</span>Top 10 Most Expensive Houses</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Rank</th><th>Price</th><th>Area (sqft)</th><th>Beds</th><th>Baths</th><th>Stories</th></tr></thead>
+        <tbody id="top10"></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🍩</span>Price Range Segmentation</div>
+      <canvas id="ch_seg" height="200"></canvas>
+      <div class="dl" id="seg_legend"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span class="icon">🌲</span>Feature Importance Ranking (Random Forest)</div>
+    <div class="rank-list" id="fi_rank2"></div>
+  </div>
+
+  <div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">💡 Business Recommendations for Real Estate Companies</div>
+
+  <div class="rec">
+    <div class="rec-head"><div class="rec-num">1</div><div class="rec-title">Maximize Area — The #1 Value Driver</div></div>
+    <div class="rec-body">Area accounts for 46.8% of the Random Forest model's predictive power with a 0.536 correlation. Every additional 1,000 sqft adds approximately ₹8–12L to property value. Developers should prioritize larger floor plans over adding extra rooms, and investors should seek suburban land where area can be maximized at lower cost.<span class="tag">Land Strategy</span><span class="tag">Portfolio Planning</span></div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><div class="rec-num">2</div><div class="rec-title">Invest in Bathrooms Over Bedrooms</div></div>
+    <div class="rec-body">Bathrooms (r=0.518) outperform bedrooms (r=0.366) in price correlation. A 4-bathroom property averages ₹122.5L vs ₹42.1L for 1 bathroom — a 3× premium. Converting spaces to add ensuite bathrooms yields a higher ROI than splitting rooms. Target 2+ bathrooms for mid-range and 3+ for premium positioning.<span class="tag">Renovation ROI</span><span class="tag">Luxury Positioning</span></div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><div class="rec-num">3</div><div class="rec-title">Air Conditioning as a Premium Signal</div></div>
+    <div class="rec-body">AC (r=0.453, 6.3% RF importance) commands a 43% price premium — AC homes average ₹60.1L vs ₹41.9L. For developers, including central AC in new builds is high-impact. For sellers, retrofitting AC before listing is one of the most cost-effective upgrades with clear ROI evidence from the data.<span class="tag">Amenity Upgrade</span><span class="tag">Resale Value</span></div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><div class="rec-num">4</div><div class="rec-title">Target the Mid-Range Sweet Spot (₹30–50L)</div></div>
+    <div class="rec-body">51% of properties (279/545) fall in the ₹30–50L Mid-Range segment — the largest market with fastest sales cycles. Our ML model achieves its highest accuracy in this range (lowest relative error). Developers targeting this segment will find the most buyers, most competitive financing, and best model-supported pricing.<span class="tag">Market Sizing</span><span class="tag">Pricing Strategy</span></div>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><div class="rec-num">5</div><div class="rec-title">Furnishing Status for Quick Conversions</div></div>
+    <div class="rec-body">Furnished properties average ₹54.9L vs ₹40.1L unfurnished — a 37% premium. Semi-furnished (₹49.1L) offers a middle ground. For landlords targeting short-term or corporate rentals, full furnishing maximizes revenue. For affordable housing, unfurnished keeps acquisition costs low and buyers have more flexibility.<span class="tag">Furnishing ROI</span><span class="tag">Rental Strategy</span></div>
+  </div>
+
+  <div class="insight">
+    <h3>📌 Key Discoveries & Surprises</h3>
+    <ul>
+      <li><strong>Surprise:</strong> Linear Regression beat Random Forest (65.3% vs 61.2% R²) — this dataset has a sufficiently linear price-feature structure that the simpler model generalizes better.</li>
+      <li><strong>Discovery:</strong> 6-bedroom homes (avg ₹47.9L) are worth less than 5-bedroom homes (avg ₹58.2L) — oversized properties face a valuation ceiling, likely due to limited buyer pool.</li>
+      <li><strong>Pattern:</strong> Main-road access adds ~47% to average price (₹49.9L vs ₹34.0L) — location connectivity is a powerful hidden value driver.</li>
+      <li><strong>Model Gap:</strong> Both models struggled with luxury properties (>₹100L), underestimating extreme prices — non-linear dynamics emerge at the top end.</li>
+      <li><strong>Recommendation:</strong> XGBoost + feature engineering (price/sqft ratio, bath-to-bed ratio, multi-amenity score) could push accuracy above 80% R².</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ── DATA (from real sklearn run on Housing.csv) ──────────────────────────────
+const HIST_COUNTS = [32,75,117,102,68,58,32,21,18,10,6,1,1,3,1];
+const HIST_EDGES  = [17.5,25.2,32.9,40.6,48.3,56.0,63.7,71.4,79.1,86.8,94.5,102.2,109.9,117.6,125.3];
+
+const BED_AVG   = {1:27.1,2:36.3,3:49.5,4:57.3,5:58.2,6:47.9};
+const BATH_AVG  = {1:42.1,2:62.1,3:72.8,4:122.5};
+const STORY_AVG = {1:41.7,2:47.6,3:56.9,4:72.1};
+const PARK_AVG  = {0:41.4,1:51.9,2:59.0,3:58.7};
+const FURN_AVG  = {'Furnished':54.9,'Semi-Furnished':49.1,'Unfurnished':40.1};
+const AC_AVG    = {'No AC':41.9,'With AC':60.1};
+
+const CORR_FEATS = ['area','bathrooms','airconditioning','stories','parking','bedrooms','prefarea','mainroad','guestroom','basement','hotwaterheating'];
+const CORR_VALS  = [0.536,0.518,0.453,0.421,0.384,0.366,0.330,0.297,0.256,0.187,0.093];
+const FI_FEATS   = ['area','bathrooms','AC','parking','stories','bedrooms','furn_unfurn','basement','prefarea','hotwater','guestroom','furn_semi'];
+const FI_VALS    = [46.8,15.1,6.3,5.7,5.7,4.8,3.5,3.1,3.1,1.7,1.7,1.4];
+
+const Y_TEST = [40.6,66.5,37.1,64.4,28.0,49.0,52.5,45.4,24.5,33.5,101.5,26.6,33.6,33.6,22.8,26.6,26.6,73.5,29.4,28.7,67.2,54.3,18.9,52.5,41.9,122.5,30.8,51.1,98.0,25.2,67.9,35.0,66.5,29.4,33.3,42.0,49.0,32.9,35.0,23.8,54.9,36.8,66.5,49.1,31.5,44.8,65.8,57.4,30.0,18.2,84.0,24.5,42.7,40.1,32.3,17.5,98.0,21.0,43.4,30.5];
+const LR_PRED = [51.6,72.2,31.1,46.1,32.9,35.3,56.1,63.7,27.2,26.3,96.2,28.0,31.7,33.9,36.8,52.6,30.4,47.9,43.5,35.7,57.7,58.9,27.3,47.3,52.4,75.6,32.2,51.9,81.4,34.0,64.9,33.2,67.1,42.0,35.6,58.4,48.1,43.6,31.9,46.0,45.7,35.2,72.1,39.8,37.5,42.7,67.6,40.4,37.7,34.2,72.7,28.0,43.4,45.2,36.8,26.8,75.0,29.2,42.4,27.7];
+const RF_PRED = [53.8,72.9,37.5,45.0,37.5,34.3,50.7,50.5,25.7,28.2,99.7,33.5,30.2,34.7,35.6,39.1,33.1,48.5,36.7,41.0,54.3,59.3,30.7,36.6,47.2,65.3,30.8,46.0,63.3,32.6,57.7,31.9,67.5,43.7,29.5,63.5,48.7,36.9,31.1,41.7,41.5,28.6,74.5,42.0,40.1,43.4,73.2,41.0,30.1,30.7,81.3,25.8,40.1,45.2,32.8,28.3,68.8,30.1,50.9,31.3];
+
+const TOP10 = [{price:133,area:7420,bedrooms:4,bathrooms:2,stories:3},{price:122.5,area:8960,bedrooms:4,bathrooms:4,stories:4},{price:122.5,area:9960,bedrooms:3,bathrooms:2,stories:2},{price:122.2,area:7500,bedrooms:4,bathrooms:2,stories:2},{price:114.1,area:7420,bedrooms:4,bathrooms:1,stories:2},{price:108.5,area:7500,bedrooms:3,bathrooms:3,stories:1},{price:101.5,area:8580,bedrooms:4,bathrooms:3,stories:4},{price:101.5,area:16200,bedrooms:5,bathrooms:3,stories:2},{price:98.7,area:8100,bedrooms:4,bathrooms:1,stories:2},{price:98.0,area:5750,bedrooms:3,bathrooms:2,stories:4}];
+
+// Raw data for scatter + filtering
+const RAW = [{"p":133,"a":7420,"b":4,"ba":1,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"unfurnished"},{"p":122.5,"a":8960,"b":4,"ba":4,"s":4,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":3,"f":"furnished"},{"p":122.5,"a":9960,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":2,"f":"semi-furnished"},{"p":122.2,"a":7500,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":3,"f":"furnished"},{"p":114.1,"a":7420,"b":4,"ba":1,"s":2,"m":"yes","g":"yes","bas":"yes","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":108.5,"a":7500,"b":3,"ba":3,"s":1,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":101.5,"a":8580,"b":4,"ba":3,"s":4,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":101.5,"a":16200,"b":5,"ba":3,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"unfurnished"},{"p":98.7,"a":8100,"b":4,"ba":1,"s":2,"m":"yes","g":"yes","bas":"yes","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":98,"a":5750,"b":3,"ba":2,"s":4,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":3,"f":"furnished"},{"p":91,"a":6000,"b":5,"ba":3,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"furnished"},{"p":87.5,"a":3500,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":3,"f":"furnished"},{"p":87.5,"a":6630,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":84,"a":6360,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":3,"f":"furnished"},{"p":84,"a":4100,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"furnished"},{"p":84,"a":4800,"b":3,"ba":3,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"furnished"},{"p":84,"a":2520,"b":3,"ba":3,"s":1,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"furnished"},{"p":81.2,"a":5500,"b":4,"ba":2,"s":4,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":79.8,"a":5040,"b":3,"ba":2,"s":4,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"furnished"},{"p":79.8,"a":4000,"b":3,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":3,"f":"semi-furnished"},{"p":77,"a":9000,"b":5,"ba":1,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"semi-furnished"},{"p":77,"a":6540,"b":4,"ba":2,"s":4,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":77,"a":4300,"b":3,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"furnished"},{"p":75.6,"a":4600,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":0,"f":"furnished"},{"p":74.9,"a":4500,"b":4,"ba":1,"s":1,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":73.5,"a":5400,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"furnished"},{"p":73.5,"a":5600,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":73.5,"a":7000,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":71.8,"a":4560,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"furnished"},{"p":71.8,"a":4000,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":70,"a":3000,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":70,"a":3200,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":69.3,"a":3700,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":69.3,"a":5600,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":69.3,"a":4800,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":68.6,"a":4000,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":67.9,"a":5120,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"semi-furnished"},{"p":67.2,"a":5040,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":67.2,"a":3860,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":2,"f":"semi-furnished"},{"p":66.5,"a":4320,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":66.5,"a":3840,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":66.5,"a":4000,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":66.5,"a":3700,"b":4,"ba":1,"s":2,"m":"yes","g":"yes","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":65.8,"a":3780,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"semi-furnished"},{"p":64.4,"a":4400,"b":3,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":63.7,"a":4000,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":0,"f":"furnished"},{"p":63.7,"a":3780,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":63,"a":4200,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":62.3,"a":3780,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":61.6,"a":3000,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"semi-furnished"},{"p":61.6,"a":3240,"b":3,"ba":1,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":61.6,"a":3500,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":60.9,"a":3640,"b":4,"ba":1,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":60.9,"a":4000,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":60.9,"a":3360,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":59.85,"a":4500,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":59.5,"a":3800,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":59.5,"a":5040,"b":3,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":58.8,"a":3640,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":58.1,"a":3480,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":57.4,"a":3240,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":57.4,"a":4000,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":57.4,"a":2787,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":56.7,"a":4200,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":56,"a":5400,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"semi-furnished"},{"p":56,"a":3400,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":56,"a":3000,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":2,"f":"semi-furnished"},{"p":55.3,"a":3780,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":55.3,"a":4480,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"semi-furnished"},{"p":55.3,"a":3640,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"furnished"},{"p":54.95,"a":3840,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":54.6,"a":3640,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":54.25,"a":4080,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":54.25,"a":3840,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":53.9,"a":3640,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":53.55,"a":3600,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":53.2,"a":4480,"b":4,"ba":2,"s":3,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"semi-furnished"},{"p":52.5,"a":4060,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":52.5,"a":3000,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":52.5,"a":3960,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"semi-furnished"},{"p":52.5,"a":4000,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":51.8,"a":3500,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"furnished"},{"p":51.1,"a":2880,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":1,"f":"semi-furnished"},{"p":50.75,"a":3960,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"semi-furnished"},{"p":50.4,"a":4160,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"semi-furnished"},{"p":50.05,"a":3920,"b":4,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":49.7,"a":3400,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":49.7,"a":3780,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"semi-furnished"},{"p":49.35,"a":3640,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"semi-furnished"},{"p":49,"a":3640,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":49,"a":4200,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":49,"a":3640,"b":3,"ba":2,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":48.65,"a":2930,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":2,"f":"furnished"},{"p":48.65,"a":2930,"b":3,"ba":1,"s":1,"m":"yes","g":"no","bas":"no","h":"no","ac":"yes","pk":0,"f":"furnished"},{"p":48,"a":3500,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":48,"a":3000,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":1,"f":"semi-furnished"},{"p":48,"a":3500,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"semi-furnished"},{"p":47.6,"a":3920,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"yes","h":"no","ac":"no","pk":0,"f":"semi-furnished"},{"p":47.25,"a":2880,"b":3,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":0,"f":"furnished"},{"p":47.25,"a":3680,"b":4,"ba":1,"s":2,"m":"yes","g":"no","bas":"no","h":"no","ac":"no","pk":2,"f":"semi-furnished"}];
+
+// ── CHART DEFAULTS ──────────────────────────────────────────────────────────
+const CD = {
+  responsive:true,
+  plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},
+    tooltip:{backgroundColor:'#131929',borderColor:'#252f4a',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#94a3b8'}},
+  scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(37,55,100,.4)'}},
+    y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(37,55,100,.4)'}}}
+};
+const BLUE_GRAD = (ctx) => { const g=ctx.createLinearGradient(0,0,0,300); g.addColorStop(0,'rgba(37,99,235,.8)'); g.addColorStop(1,'rgba(37,99,235,.2)'); return g; };
+
+let charts={}, chartsReady={};
+
+function initPage(id){
+  if(chartsReady[id]) return;
+  chartsReady[id]=true;
+  if(id==='p1') initP1();
+  if(id==='p2') initP2();
+  if(id==='p3') initP3();
+  if(id==='p4') initP4();
+  if(id==='p5') initP5();
+}
+
+function goPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>initPage(id),50);
+}
+
+// ── PAGE 1 ───────────────────────────────────────────────────────────────────
+function initP1(){
+  const c1 = document.getElementById('ch_hist').getContext('2d');
+  new Chart(c1,{type:'bar',data:{labels:HIST_EDGES.slice(0,-1).map((v,i)=>`₹${v}L`),
+    datasets:[{label:'Count',data:HIST_COUNTS,
+      backgroundColor:HIST_COUNTS.map((_,i)=>`hsla(${215+i*4},75%,${50+i*1.5}%,0.75)`),
+      borderWidth:0,borderRadius:3}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false}}}});
+
+  new Chart(document.getElementById('ch_types').getContext('2d'),{type:'doughnut',
+    data:{labels:['Numeric (6)','Binary Categorical (6)','Multi-Category (1)'],
+      datasets:[{data:[6,6,1],backgroundColor:['#2563eb','#f59e0b','#10b981'],borderWidth:0}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},padding:14}},
+      tooltip:{backgroundColor:'#131929',borderColor:'#252f4a',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#94a3b8'}}}});
+}
+
+// ── PAGE 2 ───────────────────────────────────────────────────────────────────
+let fHistChart, scatterChart;
+function initP2(){
+  // Filtered Histogram
+  const fh = document.getElementById('ch_fhist').getContext('2d');
+  fHistChart = new Chart(fh,{type:'bar',data:{labels:HIST_EDGES.slice(0,-1).map(v=>`₹${v}L`),
+    datasets:[{label:'Count',data:HIST_COUNTS,backgroundColor:'rgba(37,99,235,0.65)',borderWidth:0,borderRadius:3}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false}}}});
+
+  // Scatter
+  const sc = document.getElementById('ch_scatter').getContext('2d');
+  const colors={'furnished':'rgba(37,99,235,0.55)','semi-furnished':'rgba(245,158,11,0.55)','unfurnished':'rgba(16,185,129,0.55)'};
+  const scData = RAW.map(d=>({x:d.a,y:d.p,r:d.b*2.2,fill:colors[d.f]||'rgba(100,100,200,.4)'}));
+  scatterChart = new Chart(sc,{type:'bubble',
+    data:{datasets:[
+      {label:'Furnished',data:RAW.filter(d=>d.f==='furnished').map(d=>({x:d.a,y:d.p,r:d.b*2.2})),backgroundColor:'rgba(37,99,235,0.5)',borderWidth:0},
+      {label:'Semi-Furnished',data:RAW.filter(d=>d.f==='semi-furnished').map(d=>({x:d.a,y:d.p,r:d.b*2.2})),backgroundColor:'rgba(245,158,11,0.5)',borderWidth:0},
+      {label:'Unfurnished',data:RAW.filter(d=>d.f==='unfurnished').map(d=>({x:d.a,y:d.p,r:d.b*2.2})),backgroundColor:'rgba(16,185,129,0.5)',borderWidth:0},
+    ]},
+    options:{...CD,scales:{x:{...CD.scales.x,title:{display:true,text:'Area (sqft)',color:'#64748b'}},y:{...CD.scales.y,title:{display:true,text:'Price (Lakhs)',color:'#64748b'}}}}});
+
+  // Bar charts
+  const barOpts=(lbl,cb)=>({...CD,plugins:{...CD.plugins,legend:{display:false}},scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:cb||((v)=>v+'L')}}}});
+  new Chart(document.getElementById('ch_bed').getContext('2d'),{type:'bar',
+    data:{labels:Object.keys(BED_AVG).map(k=>k+' Bed'),datasets:[{label:'Avg Price (L)',data:Object.values(BED_AVG),
+      backgroundColor:['#1e3a8a','#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd'],borderWidth:0,borderRadius:4}]},
+    options:barOpts()});
+  new Chart(document.getElementById('ch_bath').getContext('2d'),{type:'bar',
+    data:{labels:Object.keys(BATH_AVG).map(k=>k+' Bath'),datasets:[{label:'Avg Price (L)',data:Object.values(BATH_AVG),
+      backgroundColor:['#065f46','#059669','#10b981','#34d399'],borderWidth:0,borderRadius:4}]},
+    options:barOpts()});
+  new Chart(document.getElementById('ch_story').getContext('2d'),{type:'bar',
+    data:{labels:Object.keys(STORY_AVG).map(k=>k+' Story'),datasets:[{label:'Avg Price (L)',data:Object.values(STORY_AVG),
+      backgroundColor:['#312e81','#4338ca','#6366f1','#818cf8'],borderWidth:0,borderRadius:4}]},
+    options:barOpts()});
+  new Chart(document.getElementById('ch_park').getContext('2d'),{type:'bar',
+    data:{labels:['0 Spaces','1 Space','2 Spaces','3 Spaces'],datasets:[{label:'Avg Price (L)',data:Object.values(PARK_AVG),
+      backgroundColor:['#78350f','#b45309','#d97706','#f59e0b'],borderWidth:0,borderRadius:4,barPercentage:.5}]},
+    options:barOpts()});
+  new Chart(document.getElementById('ch_furn').getContext('2d'),{type:'bar',
+    data:{labels:Object.keys(FURN_AVG),datasets:[{label:'Avg Price (L)',data:Object.values(FURN_AVG),
+      backgroundColor:['#5b21b6','#7c3aed','#a78bfa'],borderWidth:0,borderRadius:4,barPercentage:.5}]},
+    options:{...barOpts(),indexAxis:'y'}});
+  new Chart(document.getElementById('ch_ac').getContext('2d'),{type:'bar',
+    data:{labels:Object.keys(AC_AVG),datasets:[{label:'Avg Price (L)',data:Object.values(AC_AVG),
+      backgroundColor:['#164e63','#0e7490'],borderWidth:0,borderRadius:4,barPercentage:.5}]},
+    options:{...barOpts(),indexAxis:'y'}});
+
+  filterP2();
+}
+
+function filterP2(){
+  const fb=document.getElementById('fb').value, fba=document.getElementById('fba').value;
+  const fs=document.getElementById('fs').value, ff=document.getElementById('ff').value;
+  const fm=document.getElementById('fm').value, fg=document.getElementById('fg').value;
+  const fbas=document.getElementById('fbas').value, fac=document.getElementById('fac').value;
+  let filtered=RAW.filter(d=>{
+    if(fb!=='all'&&d.b!=+fb)return false;
+    if(fba!=='all'&&d.ba!=+fba)return false;
+    if(fs!=='all'&&d.s!=+fs)return false;
+    if(ff!=='all'&&d.f!==ff)return false;
+    if(fm!=='all'&&d.m!==fm)return false;
+    if(fg!=='all'&&d.g!==fg)return false;
+    if(fbas!=='all'&&d.bas!==fbas)return false;
+    if(fac!=='all'&&d.ac!==fac)return false;
+    return true;
+  });
+  document.getElementById('fcnt').textContent=filtered.length+' properties match';
+  if(fHistChart){
+    const mn=17.5,step=7.7;
+    const counts=HIST_EDGES.slice(0,-1).map((lo,i)=>{
+      const hi=HIST_EDGES[i+1]||200;
+      return filtered.filter(d=>d.p>=lo&&d.p<hi).length;
+    });
+    fHistChart.data.datasets[0].data=counts;
+    fHistChart.update();
+  }
+}
+function resetF(){['fb','fba','fs','ff','fm','fg','fbas','fac'].forEach(id=>document.getElementById(id).value='all');filterP2();}
+
+// ── PAGE 3 ───────────────────────────────────────────────────────────────────
+function initP3(){
+  new Chart(document.getElementById('ch_corr').getContext('2d'),{type:'bar',
+    data:{labels:CORR_FEATS,datasets:[{label:'Correlation with Price',data:CORR_VALS,
+      backgroundColor:CORR_VALS.map(v=>`rgba(37,99,235,${0.25+v*0.8})`),borderWidth:0,borderRadius:3}]},
+    options:{...CD,indexAxis:'y',plugins:{...CD.plugins,legend:{display:false}},
+      scales:{...CD.scales,x:{...CD.scales.x,min:0,max:0.65,ticks:{...CD.scales.x.ticks,callback:v=>v.toFixed(2)}},y:{ticks:{color:'#94a3b8',font:{size:10}}}}}});
+
+  new Chart(document.getElementById('ch_fi').getContext('2d'),{type:'bar',
+    data:{labels:FI_FEATS,datasets:[{label:'Importance %',data:FI_VALS,
+      backgroundColor:FI_VALS.map((_,i)=>`hsla(${220-i*8},75%,${55+i*1.5}%,0.8)`),borderWidth:0,borderRadius:3}]},
+    options:{...CD,indexAxis:'y',plugins:{...CD.plugins,legend:{display:false}},
+      scales:{...CD.scales,y:{ticks:{color:'#94a3b8',font:{size:10}}}}}});
+
+  // Positive rank
+  const pr=document.getElementById('pos_rank');
+  const posD=[{n:'Area (sqft)',v:53.6,c:'#2563eb'},{n:'Bathrooms',v:51.8,c:'#3b82f6'},{n:'Air Cond.',v:45.3,c:'#60a5fa'},{n:'Stories',v:42.1,c:'#93c5fd'},{n:'Parking',v:38.4,c:'#bfdbfe'},{n:'Bedrooms',v:36.6,c:'#dbeafe'}];
+  pr.innerHTML=posD.map(d=>`<div class="rank-item"><div class="rank-name">${d.n}</div><div class="rank-track"><div class="rank-fill" style="width:${d.v}%;background:${d.c}">${d.v}%</div></div><div class="rank-val">${d.v}%</div></div>`).join('');
+
+  // FI rank
+  const fir=document.getElementById('fi_rank');
+  fir.innerHTML=FI_FEATS.map((n,i)=>`<div class="rank-item"><div class="rank-name">${n}</div><div class="rank-track"><div class="rank-fill" style="width:${(FI_VALS[i]/FI_VALS[0]*100).toFixed(0)}%;background:hsl(${220-i*8},65%,55%)">${FI_VALS[i]}%</div></div><div class="rank-val">${FI_VALS[i]}%</div></div>`).join('');
+
+  // Heatmap
+  const feats=['price','area','bathrooms','bedrooms','stories','parking'];
+  const mat=[[1.00,0.54,0.52,0.37,0.42,0.38],[0.54,1.00,0.19,0.14,0.24,0.23],[0.52,0.19,1.00,0.29,0.24,0.19],[0.37,0.14,0.29,1.00,0.36,0.23],[0.42,0.24,0.24,0.36,1.00,0.31],[0.38,0.23,0.19,0.23,0.31,1.00]];
+  let html=`<table><thead><tr><th></th>${feats.map(f=>`<th>${f}</th>`).join('')}</tr></thead><tbody>`;
+  mat.forEach((row,ri)=>{
+    html+=`<tr><th style="padding:5px 10px;color:var(--text3);font-size:10px;white-space:nowrap">${feats[ri]}</th>`;
+    row.forEach(v=>{
+      const bg=`rgba(37,99,235,${0.05+Math.abs(v)*.85})`;
+      const tc=Math.abs(v)>.5?'white':'#94a3b8';
+      html+=`<td style="background:${bg};color:${tc}">${v.toFixed(2)}</td>`;
+    });
+    html+=`</tr>`;
+  });
+  document.getElementById('heatmap').innerHTML=html+'</tbody></table>';
+}
+
+// ── PAGE 4 ───────────────────────────────────────────────────────────────────
+function initP4(){
+  const bO=(lbl)=>({...CD,plugins:{...CD.plugins,legend:{display:false}},scales:{...CD.scales,y:{...CD.scales.y,ticks:{callback:v=>v}}}});
+  new Chart(document.getElementById('ch_mae').getContext('2d'),{type:'bar',
+    data:{labels:['Linear Reg','Random Forest'],datasets:[{data:[9.7,10.2],backgroundColor:['rgba(37,99,235,.75)','rgba(16,185,129,.75)'],borderWidth:0,borderRadius:6,barPercentage:.5}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false}},scales:{...CD.scales,y:{ticks:{color:'#64748b',callback:v=>v+'L'}}}}});
+  new Chart(document.getElementById('ch_rmse').getContext('2d'),{type:'bar',
+    data:{labels:['Linear Reg','Random Forest'],datasets:[{data:[13.2,14.0],backgroundColor:['rgba(245,158,11,.75)','rgba(139,92,246,.75)'],borderWidth:0,borderRadius:6,barPercentage:.5}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false}},scales:{...CD.scales,y:{ticks:{color:'#64748b',callback:v=>v+'L'}}}}});
+  new Chart(document.getElementById('ch_r2').getContext('2d'),{type:'bar',
+    data:{labels:['Linear Reg','Random Forest'],datasets:[{data:[0.653,0.612],backgroundColor:['rgba(16,185,129,.75)','rgba(37,99,235,.75)'],borderWidth:0,borderRadius:6,barPercentage:.5}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false}},scales:{...CD.scales,y:{min:0,max:1,ticks:{color:'#64748b',callback:v=>(v*100).toFixed(0)+'%'}}}}});
+
+  const scOpts={...CD,scales:{x:{...CD.scales.x,title:{display:true,text:'Actual Price (L)',color:'#64748b'}},y:{...CD.scales.y,title:{display:true,text:'Predicted Price (L)',color:'#64748b'}}}};
+  new Chart(document.getElementById('ch_avp_lr').getContext('2d'),{type:'scatter',
+    data:{datasets:[
+      {label:'Predictions',data:Y_TEST.map((v,i)=>({x:v,y:LR_PRED[i]})),backgroundColor:'rgba(37,99,235,.5)',pointRadius:4},
+      {label:'Perfect',data:[{x:0,y:0},{x:130,y:130}],type:'line',borderColor:'#f59e0b',borderDash:[5,5],borderWidth:1.5,pointRadius:0,showLine:true}
+    ]},options:scOpts});
+  new Chart(document.getElementById('ch_avp_rf').getContext('2d'),{type:'scatter',
+    data:{datasets:[
+      {label:'Predictions',data:Y_TEST.map((v,i)=>({x:v,y:RF_PRED[i]})),backgroundColor:'rgba(16,185,129,.5)',pointRadius:4},
+      {label:'Perfect',data:[{x:0,y:0},{x:130,y:130}],type:'line',borderColor:'#f59e0b',borderDash:[5,5],borderWidth:1.5,pointRadius:0,showLine:true}
+    ]},options:scOpts});
+
+  const resids=Y_TEST.map((v,i)=>LR_PRED[i]-v);
+  const mn=Math.min(...resids),mx=Math.max(...resids),step=(mx-mn)/12;
+  const rLabels=[],rCounts=[];
+  for(let i=0;i<12;i++){const lo=mn+i*step,hi=lo+step;rLabels.push(lo.toFixed(1));rCounts.push(resids.filter(r=>r>=lo&&r<hi).length);}
+  new Chart(document.getElementById('ch_resid').getContext('2d'),{type:'bar',
+    data:{labels:rLabels,datasets:[{label:'Frequency',data:rCounts,backgroundColor:'rgba(139,92,246,.65)',borderWidth:0,borderRadius:3}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false}}}});
+}
+
+// ── PAGE 5 ───────────────────────────────────────────────────────────────────
+function initP5(){
+  const t=document.getElementById('top10');
+  const badge=['b-gold','b-gold','b-gold','b-blue','b-blue','b-blue','b-purple','b-purple','b-purple','b-purple'];
+  TOP10.forEach((h,i)=>{
+    t.innerHTML+=`<tr><td><span class="badge ${badge[i]}">#${i+1}</span></td><td><strong>₹${h.price}L</strong></td><td>${h.area.toLocaleString()}</td><td>${h.bedrooms}</td><td>${h.bathrooms}</td><td>${h.stories}</td></tr>`;
+  });
+
+  const segData={labels:['Mid-Range (3–5M)','Premium (5–7M)','Budget (<3M)','Luxury (>7M)'],counts:[279,131,71,64],colors:['#2563eb','#8b5cf6','#10b981','#f59e0b']};
+  new Chart(document.getElementById('ch_seg').getContext('2d'),{type:'doughnut',
+    data:{labels:segData.labels,datasets:[{data:segData.counts,backgroundColor:segData.colors,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#131929',borderColor:'#252f4a',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#94a3b8'}}}});
+  const leg=document.getElementById('seg_legend');
+  segData.labels.forEach((l,i)=>{
+    const pct=((segData.counts[i]/545)*100).toFixed(1);
+    leg.innerHTML+=`<div class="dl-item"><div class="dl-dot" style="background:${segData.colors[i]}"></div>${l} — ${segData.counts[i]} (${pct}%)</div>`;
+  });
+
+  const fir2=document.getElementById('fi_rank2');
+  fir2.innerHTML=FI_FEATS.map((n,i)=>`<div class="rank-item"><div class="rank-name">${n}</div><div class="rank-track"><div class="rank-fill" style="width:${(FI_VALS[i]/FI_VALS[0]*100).toFixed(0)}%;background:hsl(${220-i*8},65%,55%)">${FI_VALS[i]}%</div></div><div class="rank-val">${FI_VALS[i]}%</div></div>`).join('');
+}
+
+// Init
+window.addEventListener('load',()=>{ chartsReady['p1']=true; initP1(); });
+</script>
+</body>
+</html>
